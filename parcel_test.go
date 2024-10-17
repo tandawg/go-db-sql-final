@@ -71,6 +71,8 @@ func TestAddGetDelete(t *testing.T) {
 
 	_, err = store.Get(id)
 	require.Error(t, err)
+
+	require.EqualError(t, err, "посылка не найдена")
 }
 
 func TestSetAddress(t *testing.T) {

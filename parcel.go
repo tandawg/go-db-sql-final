@@ -34,9 +34,9 @@ func (s ParcelStore) Get(number int) (Parcel, error) {
 	err := row.Scan(&parcel.Number, &parcel.Client, &parcel.Status, &parcel.Address, &parcel.CreatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return parcel, errors.New("посылка не найдена")
+			return Parcel{}, errors.New("посылка не найдена")
 		}
-		return parcel, err
+		return Parcel{}, err
 	}
 
 	return parcel, nil
@@ -60,6 +60,10 @@ func (s ParcelStore) GetByClient(client int) ([]Parcel, error) {
 		res = append(res, parcel)
 	}
 
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
 	return res, nil
 }
 
@@ -73,6 +77,8 @@ func (s ParcelStore) SetStatus(number int, status string) error {
 	return nil
 }
 
+var ErrAddressChangeNotAllowed = errors.New("адрес можно изменить только для посылок со статусом 'registered'")
+
 func (s ParcelStore) SetAddress(number int, address string) error {
 	parcel, err := s.Get(number)
 	if err != nil {
@@ -80,7 +86,7 @@ func (s ParcelStore) SetAddress(number int, address string) error {
 	}
 
 	if parcel.Status != ParcelStatusRegistered {
-		return errors.New("адрес можно изменить только для посылок со статусом 'registered'")
+		return ErrAddressChangeNotAllowed
 	}
 
 	query := `UPDATE parcels SET address = ? WHERE id = ?`
